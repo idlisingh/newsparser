@@ -1,0 +1,5 @@
+drop table last_run;
+
+create table last_run (
+	run_time	timestamp
+);
