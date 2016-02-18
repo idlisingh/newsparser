@@ -3,6 +3,7 @@ package com.newsbubble.newsparser
 import com.newsbubble.newsparser.domain.ArticleSummary
 import com.newsbubble.newsparser.domain.CandidateDetails
 import com.newsbubble.newsparser.domain.CandidateSourceKey
+import com.newsbubble.newsparser.domain.CandidateSummary
 import groovy.sql.Sql
 import org.apache.log4j.Logger
 
@@ -11,6 +12,7 @@ import java.sql.Timestamp
 class Analyser {
 
     def Sql sql
+    def DAO dao
 
     def static Logger LOG = Logger.getLogger(Analyser.class)
 
@@ -19,6 +21,8 @@ class Analyser {
         def userId = System.getProperty("db.user")
         def password = System.getProperty("db.password")
         sql = Sql.newInstance(url, userId, password, "org.postgresql.Driver")
+
+        dao = new DAO()
     }
 
     def void analyse() {
@@ -26,73 +30,26 @@ class Analyser {
 
         Timestamp lastRun = "get last run"()
 
-        def List details = getLatestCandidateSummaries(lastRun)
-
-        Map<CandidateSourceKey, Integer> candidateCountMap = details[0]
-        ArrayList<CandidateSourceKey> dbCandidateSourceValues = 'get existing candidate summaries'()
-        mergeValues(candidateCountMap, dbCandidateSourceValues)
+        def List<ArticleSummary> articles = dao.getArticleSummary(lastRun)
+        def List details = processArticles(articles)
 
         List<CandidateDetails> candidateDetails = details[1]
-        List<CandidateDetails> dbCandidateDetails = getExistingCandidateDetails()
-        mergeValues(candidateDetails, dbCandidateDetails)
+        List<CandidateDetails> dbCandidateDetails = dao.getExistingCandidateDetails()
+        candidateDetails.removeAll(dbCandidateDetails)
+        dao.insert(candidateDetails)
+
+        List<CandidateSummary> newCandidateSummary = details[0]
+        List<CandidateSummary> dbCandidateSummary = dao.getExistingCandidateSummary()
+        mergeValues(newCandidateSummary, dbCandidateSummary)
 
         printCandidateSummaryDetails()
 
         LOG.info("Done processing")
     }
 
-    def void mergeValues(List<CandidateDetails> candidateDetails, List<CandidateDetails> dbCandidateDetails) {
-        candidateDetails.removeAll(dbCandidateDetails)
-        candidateDetails.each { detail ->
-            sql.execute("insert into candidate_details(candidate, article_id) values(?, ?)", [detail.candidate, detail.articleId])
-        }
-    }
-
-    def List<CandidateDetails> getExistingCandidateDetails() {
-        def List<CandidateDetails> dbCandidates = []
-        sql.eachRow("select id, candidate, article_id, created_ts from candidate_details") {
-            dbCandidates += new CandidateDetails(
-                    id: it.id,
-                    candidate: it.candidate,
-                    articleId: it.article_id,
-                    createdTs: it.created_ts
-            )
-        }
-        LOG.info("Number of candidate details from db: ${dbCandidates.size()}")
-        dbCandidates
-    }
-
-    def void printCandidateSummaryDetails() {
-        def Map<String, Integer> map = [:]
-        sql.eachRow("select candidate, sum(count) as sum from candidate_summary group by candidate order by sum;") {
-            map[it.candidate] = it.sum
-        }
-        def totalArticles = map.values().sum()
-        LOG.info("Total articles processed $totalArticles")
-        LOG.info("Current candidate summary details")
-        map.each { candidate, sum ->
-            LOG.info("Candidate: $candidate Count: $sum (${ new Double(sum / totalArticles * 100.0).round(2) }%)".padLeft(2))
-        }
-    }
-
-    def getLatestCandidateSummaries(Timestamp lastRun) {
-        def List<ArticleSummary> articles = []
-        sql.eachRow("select id, headlines, news_date, source, article_link, description, created_ts from article_summary where created_ts > ?", [lastRun]) {
-            articles += new ArticleSummary(
-                    id: it.id,
-                    headlines: it.headlines,
-                    newsDate: it.news_date,
-                    source: it.source,
-                    link: it.article_link,
-                    description: it.description,
-                    createdTs: it.created_ts
-            )
-        }
-
-        LOG.info("Number of articles processing: ${articles.size()}")
-
+    def processArticles(List<ArticleSummary> articles) {
         def candidateDetails = []
-        def Map candidateCountMap = [:].withDefault { 0 }
+        def Map<CandidateSourceKey, Integer> candidateCountMap = [:].withDefault { 0 }
         articles.each { ArticleSummary articleSummary ->
             def headlines = (articleSummary.headlines == null) ? "" : articleSummary.headlines.toLowerCase()
             def description = (articleSummary.description == null) ? "" : articleSummary.description.toLowerCase()
@@ -108,40 +65,39 @@ class Analyser {
             }
         }
 
-        LOG.info("Raw candidate map: ${candidateCountMap.size()}")
-        return [candidateCountMap, candidateDetails]
-    }
-
-    def ArrayList<CandidateSourceKey> 'get existing candidate summaries'() {
-        def List<CandidateSourceKey> dbCandidateSourceValues = []
-        sql.eachRow("select news_date, candidate, source from candidate_summary") {
-            dbCandidateSourceValues += new CandidateSourceKey(
-                    candidate: it.candidate,
-                    source: it.source,
-                    newsDate: it.news_date
-            )
+        def List<CandidateSummary> candidateSummaries = candidateCountMap.collect { key, value ->
+            new CandidateSummary(candidate: key.candidate, source: key.source, newsDate: key.newsDate, count: value)
         }
-        LOG.info("Number of summaries from db: ${dbCandidateSourceValues.size()}")
-        dbCandidateSourceValues
+
+        LOG.info("Raw candidate map: ${candidateCountMap.size()}")
+        return [candidateSummaries, candidateDetails]
     }
 
-    def void mergeValues(Map<CandidateSourceKey, Integer> candidateCountMap, dbCandidateSourceValues) {
-        def updateValues = candidateCountMap.findAll { dbCandidateSourceValues.contains(it.key) }
-        def insertValues = candidateCountMap.findAll { !dbCandidateSourceValues.contains(it.key) }
+    def void printCandidateSummaryDetails() {
+
+        List<CandidateSummary> summary = dao.getExistingCandidateSummary()
+        def Map<String, Integer> summaryMap = [:].withDefault { 0 }
+        summary.each {
+            summaryMap[it.candidate] = summaryMap[it.candidate] + it.count
+        }
+
+        summaryMap = summaryMap.sort{ it.value }
+        def totalArticles = summaryMap.values().sum()
+        LOG.info("Total articles processed $totalArticles")
+        LOG.info("Current candidate summary details")
+        summaryMap.each { candidate, sum ->
+            LOG.info("Candidate: $candidate Count: $sum (${ new Double(sum / totalArticles * 100.0).round(2) }%)".padLeft(2))
+        }
+    }
+
+    def void mergeValues(List<CandidateSummary> newCandidateSummary, List<CandidateSummary> dbCandidateSummary) {
+        def updateValues = newCandidateSummary.findAll { dbCandidateSummary.contains(it) }
+        def insertValues = newCandidateSummary.findAll { !dbCandidateSummary.contains(it) }
 
         LOG.info("Insert: ${insertValues.size()} Update: ${updateValues.size()}")
 
-        insertValues.each { CandidateSourceKey key, value ->
-            sql.execute("insert into candidate_summary(news_date, candidate, source, count) values(?, ?, ?, ?)",
-                    [key.newsDate, key.candidate, key.source, value]
-            )
-        }
-
-        updateValues.each { CandidateSourceKey key, value ->
-            sql.execute("update candidate_summary set count = (count + ? ), updated_ts = current_timestamp where news_date = ? and candidate = ? and source = ?",
-                    [value, key.newsDate, key.candidate, key.source]
-            )
-        }
+        dao.insertCandidateSummary(insertValues)
+        dao.updateCandidateSummary(updateValues)
     }
 
     def Timestamp "get last run"() {

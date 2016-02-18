@@ -1,0 +1,93 @@
+package com.newsbubble.newsparser
+
+import com.newsbubble.newsparser.domain.ArticleSummary
+import com.newsbubble.newsparser.domain.CandidateDetails
+import com.newsbubble.newsparser.domain.CandidateSourceKey
+import com.newsbubble.newsparser.domain.CandidateSummary
+import groovy.sql.Sql
+import org.apache.log4j.Logger
+
+import java.sql.Timestamp
+
+class DAO {
+    def Sql sql
+
+    def static Logger LOG = Logger.getLogger(DAO.class)
+
+    def DAO() {
+        def url = System.getProperty("db.url")
+        def userId = System.getProperty("db.user")
+        def password = System.getProperty("db.password")
+        sql = Sql.newInstance(url, userId, password, "org.postgresql.Driver")
+    }
+
+    def ArrayList<CandidateSummary> getExistingCandidateSummary() {
+        def List<CandidateSummary> candidateSummaries = []
+        sql.eachRow("select news_date, candidate, source, count, created_ts, updated_ts from candidate_summary") {
+            candidateSummaries += new CandidateSummary(
+                    candidate: it.candidate,
+                    source: it.source,
+                    newsDate: it.news_date,
+                    count: it.count,
+                    createdTs: it.created_ts,
+                    updatedTs: it.updated_ts
+            )
+        }
+        LOG.info("Number of summaries from db: ${candidateSummaries.size()}")
+        candidateSummaries
+    }
+
+    def List<CandidateDetails> getExistingCandidateDetails() {
+        def List<CandidateDetails> dbCandidates = []
+        sql.eachRow("select id, candidate, article_id, created_ts from candidate_details") {
+            dbCandidates += new CandidateDetails(
+                    id: it.id,
+                    candidate: it.candidate,
+                    articleId: it.article_id,
+                    createdTs: it.created_ts
+            )
+        }
+        LOG.info("Number of candidate details from db: ${dbCandidates.size()}")
+        dbCandidates
+    }
+
+    def List<ArticleSummary> getArticleSummary(Timestamp lastRun) {
+        def List<ArticleSummary> articles = []
+        sql.eachRow("select id, headlines, news_date, source, article_link, description, created_ts from article_summary where created_ts > ?", [lastRun]) {
+            articles += new ArticleSummary(
+                    id: it.id,
+                    headlines: it.headlines,
+                    newsDate: it.news_date,
+                    source: it.source,
+                    link: it.article_link,
+                    description: it.description,
+                    createdTs: it.created_ts
+            )
+        }
+        LOG.info("Number of articles processing: ${articles.size()}")
+
+        articles
+    }
+
+    def insertCandidateSummary(List<CandidateSummary> insertValues) {
+        insertValues.each { CandidateSummary key ->
+            sql.execute("insert into candidate_summary(news_date, candidate, source, count) values(?, ?, ?, ?)",
+                    [key.newsDate, key.candidate, key.source, key.count]
+            )
+        }
+    }
+
+    def updateCandidateSummary(List<CandidateSummary> updateValues) {
+        updateValues.each { CandidateSummary key ->
+            sql.execute("update candidate_summary set count = (count + ? ), updated_ts = current_timestamp where news_date = ? and candidate = ? and source = ?",
+                    [key.count, key.newsDate, key.candidate, key.source]
+            )
+        }
+    }
+
+    def insert(List<CandidateDetails> candidateDetails) {
+        candidateDetails.each { detail ->
+            sql.execute("insert into candidate_details(candidate, article_id) values(?, ?)", [detail.candidate, detail.articleId])
+        }
+    }
+}
