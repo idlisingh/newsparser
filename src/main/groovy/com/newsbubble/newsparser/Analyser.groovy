@@ -37,9 +37,15 @@ class Analyser {
     }
 
     def void printCandidateSummaryDetails() {
+        def Map<String, Integer> map = [:]
+        sql.eachRow("select candidate, sum(count) as sum from candidate_summary group by candidate order by sum;") {
+            map[it.candidate] = it.sum
+        }
+        def totalArticles = map.values().sum()
+        LOG.info("Total articles processed $totalArticles")
         LOG.info("Current candidate summary details")
-        sql.eachRow("select candidate, sum(count) from candidate_summary group by candidate order by sum;") {
-            LOG.info(it)
+        map.each { candidate, sum ->
+            LOG.info("Candidate: $candidate Count: $sum (${ new Double(sum / totalArticles * 100.0).round(2) }%)".padLeft(2))
         }
     }
 
