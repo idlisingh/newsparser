@@ -1,0 +1,8 @@
+drop table candidate_details;
+
+create table candidate_details (
+	id		SERIAL,
+	candidate	varchar(100),
+	article_id	integer,
+	created_ts	timestamp default current_timestamp
+);

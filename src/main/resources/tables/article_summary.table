@@ -1,6 +1,7 @@
 drop table article_summary;
 
 create table article_summary (
+	id		SERIAL,
 	headlines 	varchar(200),
 	news_date 	date,
 	source		varchar(20),

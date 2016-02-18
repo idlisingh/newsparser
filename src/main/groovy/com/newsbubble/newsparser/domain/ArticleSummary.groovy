@@ -7,6 +7,7 @@ import java.sql.Timestamp
 
 @ToString(includes = ["headlines"], includePackage = false)
 class ArticleSummary {
+    def Integer id
     def String headlines
     def Date newsDate
     def String source

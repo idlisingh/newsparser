@@ -1,6 +1,7 @@
 package com.newsbubble.newsparser
 
 import com.newsbubble.newsparser.domain.ArticleSummary
+import com.newsbubble.newsparser.domain.CandidateDetails
 import com.newsbubble.newsparser.domain.CandidateSourceKey
 import groovy.sql.Sql
 import org.apache.log4j.Logger
@@ -25,15 +26,40 @@ class Analyser {
 
         Timestamp lastRun = "get last run"()
 
-        Map<CandidateSourceKey, Integer> candidateCountMap = getLatestCandidateSummaries(lastRun)
+        def List details = getLatestCandidateSummaries(lastRun)
 
+        Map<CandidateSourceKey, Integer> candidateCountMap = details[0]
         ArrayList<CandidateSourceKey> dbCandidateSourceValues = 'get existing candidate summaries'()
-
         mergeValues(candidateCountMap, dbCandidateSourceValues)
+
+        List<CandidateDetails> candidateDetails = details[1]
+        List<CandidateDetails> dbCandidateDetails = getExistingCandidateDetails()
+        mergeValues(candidateDetails, dbCandidateDetails)
 
         printCandidateSummaryDetails()
 
         LOG.info("Done processing")
+    }
+
+    def void mergeValues(List<CandidateDetails> candidateDetails, List<CandidateDetails> dbCandidateDetails) {
+        candidateDetails.removeAll(dbCandidateDetails)
+        candidateDetails.each { detail ->
+            sql.execute("insert into candidate_details(candidate, article_id) values(?, ?)", [detail.candidate, detail.articleId])
+        }
+    }
+
+    def List<CandidateDetails> getExistingCandidateDetails() {
+        def List<CandidateDetails> dbCandidates = []
+        sql.eachRow("select id, candidate, article_id, created_ts from candidate_details") {
+            dbCandidates += new CandidateDetails(
+                    id: it.id,
+                    candidate: it.candidate,
+                    articleId: it.article_id,
+                    createdTs: it.created_ts
+            )
+        }
+        LOG.info("Number of candidate details from db: ${dbCandidates.size()}")
+        dbCandidates
     }
 
     def void printCandidateSummaryDetails() {
@@ -49,10 +75,11 @@ class Analyser {
         }
     }
 
-    def Map<CandidateSourceKey, Integer> getLatestCandidateSummaries(Timestamp lastRun) {
+    def getLatestCandidateSummaries(Timestamp lastRun) {
         def List<ArticleSummary> articles = []
-        sql.eachRow("select headlines, news_date, source, article_link, description, created_ts from article_summary where created_ts > ?", [lastRun]) {
+        sql.eachRow("select id, headlines, news_date, source, article_link, description, created_ts from article_summary where created_ts > ?", [lastRun]) {
             articles += new ArticleSummary(
+                    id: it.id,
                     headlines: it.headlines,
                     newsDate: it.news_date,
                     source: it.source,
@@ -64,6 +91,7 @@ class Analyser {
 
         LOG.info("Number of articles processing: ${articles.size()}")
 
+        def candidateDetails = []
         def Map candidateCountMap = [:].withDefault { 0 }
         articles.each { ArticleSummary articleSummary ->
             def headlines = (articleSummary.headlines == null) ? "" : articleSummary.headlines.toLowerCase()
@@ -72,12 +100,16 @@ class Analyser {
                 if (headlines.contains(candidate) || description.contains(candidate)) {
                     def CandidateSourceKey candidateSourceKey = new CandidateSourceKey(candidate: candidate, source: articleSummary.source, newsDate: articleSummary.newsDate)
                     candidateCountMap[candidateSourceKey] = candidateCountMap[candidateSourceKey] + 1
+                    candidateDetails += new CandidateDetails(
+                            candidate: candidate,
+                            articleId: articleSummary.id
+                    )
                 }
             }
         }
 
         LOG.info("Raw candidate map: ${candidateCountMap.size()}")
-        candidateCountMap
+        return [candidateCountMap, candidateDetails]
     }
 
     def ArrayList<CandidateSourceKey> 'get existing candidate summaries'() {
