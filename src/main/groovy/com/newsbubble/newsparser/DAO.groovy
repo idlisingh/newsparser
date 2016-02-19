@@ -17,7 +17,8 @@ class DAO {
         def url = System.getProperty("db.url")
         def userId = System.getProperty("db.user")
         def password = System.getProperty("db.password")
-        sql = Sql.newInstance(url, userId, password, "org.postgresql.Driver")
+        def driver = System.getProperty("db.driver")
+        sql = Sql.newInstance(url, userId, password, driver)
     }
 
     def ArrayList<CandidateSummary> getExistingCandidateSummary() {
