@@ -2,7 +2,6 @@ package com.newsbubble.newsparser
 
 import com.newsbubble.newsparser.domain.ArticleSummary
 import com.newsbubble.newsparser.domain.CandidateDetails
-import com.newsbubble.newsparser.domain.CandidateSourceKey
 import com.newsbubble.newsparser.domain.CandidateSummary
 import groovy.sql.Sql
 import org.apache.log4j.Logger
@@ -89,5 +88,24 @@ class DAO {
         candidateDetails.each { detail ->
             sql.execute("insert into candidate_details(candidate, article_id) values(?, ?)", [detail.candidate, detail.articleId])
         }
+    }
+
+    def insertArticleSummary(List<ArticleSummary> articles) {
+        if (!articles.isEmpty()) {
+            articles.each { ArticleSummary it ->
+                sql.execute("insert into article_summary(headlines, news_date, source, article_link, description) values(?, ?, ?, ?, ?)",
+                        [it.headlines, it.newsDate, it.source, it.link, it.description])
+            }
+        }
+    }
+
+    def List<String> getDistinctArticleHeadlines() {
+        def List<String> dbHeadLines = []
+
+        sql.eachRow("select distinct headlines from article_summary") {
+            dbHeadLines += it.headlines
+        }
+
+        dbHeadLines
     }
 }

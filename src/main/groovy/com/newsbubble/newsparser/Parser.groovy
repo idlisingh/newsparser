@@ -1,25 +1,22 @@
 package com.newsbubble.newsparser
 
 import com.newsbubble.newsparser.domain.ArticleSummary
-import groovy.sql.Sql
 import org.apache.log4j.Logger
 
 import java.text.SimpleDateFormat
 
 class Parser {
 
-    def Sql sql
-    def List<String> dbheadlines = []
+    def DAO dao
+
+    def List<String> dbHeadLines
 
     def static Logger LOG = Logger.getLogger(Parser.class)
 
     Parser() {
-        sql = Sql.newInstance("jdbc:postgresql://localhost:5432/news", "postgres", "abc123", "org.postgresql.Driver")
+        dao = new DAO()
 
-        sql.eachRow("select distinct headlines from article_summary") {
-            dbheadlines += it.headlines
-        }
-
+        dbHeadLines = dao.getDistinctArticleHeadlines()
     }
 
     def void parser(String source, String rssLink) {
@@ -47,16 +44,11 @@ class Parser {
 
         LOG.debug("Parsed ${articles.size()} number of items from source")
 
-        articles = articles.findAll{ !dbheadlines.contains(it.headlines) }
+        articles = articles.findAll{ !dbHeadLines.contains(it.headlines) }
 
         LOG.debug("Filtered article size: ${articles.size()}")
 
-        if (!articles.isEmpty()) {
-            articles.each { ArticleSummary it ->
-                sql.execute("insert into article_summary(headlines, news_date, source, article_link, description) values(?, ?, ?, ?, ?)",
-                        [it.headlines, it.newsDate, source, it.link, it.description])
-            }
-        }
+        dao.insertArticleSummary(articles)
 
         LOG.info("Done processing for $source. Inserted ${articles.size()} values")
     }
