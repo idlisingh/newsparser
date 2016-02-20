@@ -32,4 +32,17 @@ class TestDAO extends AbstractDBSetup {
         assert "description4" == values[0].description
         assert new Timestamp(4) == values[0].createdTs
     }
+
+    @Test def void "test getDistinctArticleHeadlines"() {
+        sql.executeInsert("insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines1', '2016-01-01', 'source1', 'http://link1', 'description1', ${new Timestamp(1)})")
+        sql.executeInsert("insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines2', '2016-01-02', 'source2', 'http://link2', 'description2', ${new Timestamp(2)})")
+        sql.executeInsert("insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines3', '2016-01-03', 'source3', 'http://link3', 'description3', ${new Timestamp(3)})")
+        sql.executeInsert("insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines4', '2016-01-04', 'source4', 'http://link4', 'description4', ${new Timestamp(4)})")
+
+        def headlines = dao.getDistinctArticleHeadlines()
+
+        assert headlines.size() == 4
+
+        assert headlines.sort() == [ "headlines1", "headlines2", "headlines3", "headlines4" ]
+    }
 }

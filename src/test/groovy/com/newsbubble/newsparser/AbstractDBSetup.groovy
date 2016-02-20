@@ -1,6 +1,7 @@
 package com.newsbubble.newsparser
 
 import groovy.sql.Sql
+import org.junit.After
 import org.junit.Before
 
 abstract class AbstractDBSetup {
@@ -20,6 +21,10 @@ abstract class AbstractDBSetup {
         sql = Sql.newInstance(url, userId, password, driver)
 
         createTables()
+    }
+
+    @After def void after() {
+        sql.execute("DROP ALL OBJECTS")
     }
 
     def void createTables() {
