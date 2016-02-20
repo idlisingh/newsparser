@@ -1,5 +1,3 @@
-drop table article_summary;
-
 create table article_summary (
 	id		SERIAL,
 	headlines 	varchar(200),

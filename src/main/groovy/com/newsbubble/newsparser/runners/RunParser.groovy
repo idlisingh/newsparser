@@ -1,6 +1,9 @@
 package com.newsbubble.newsparser.runners
 
 import com.newsbubble.newsparser.Parser
+import org.apache.log4j.Logger
+
+def Logger LOG = Logger.getLogger(RunParser.class)
 
 def parser = new Parser()
 
@@ -14,7 +17,12 @@ def parser = new Parser()
         "bbc": "http://feeds.bbci.co.uk/news/politics/rss.xml?edition=us",
         "nytimes": "http://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"
 ]
-
-sourceMap.each { source, rss ->
-    parser.parser(source, rss)
+while(true) {
+    LOG.info("Begin processing all sources.")
+    sourceMap.each { source, rss ->
+        parser.parser(source, rss)
+    }
+    LOG.info("Done processing all sources. Sleeping")
+    Thread.sleep(60000)
+    LOG.info("**************************************")
 }
