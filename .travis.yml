@@ -1,6 +1,1 @@
 language: groovy
-notifications:
-  email:
-    recipients:
-      - idlisingh@outlook.com
-    on_failure: always
