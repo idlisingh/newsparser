@@ -1,5 +1,3 @@
-drop table candidate_summary;
-
 create table candidate_summary (
 	news_date	date,
 	candidate 	varchar(100),
