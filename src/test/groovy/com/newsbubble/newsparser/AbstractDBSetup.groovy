@@ -28,7 +28,7 @@ abstract class AbstractDBSetup {
     }
 
     def void createTables() {
-        ["tables/article_summary.table"].each {
+        ["tables/article_summary.table", "sql/inserts.sql"].each {
             def table = this.getClass().getClassLoader().getResourceAsStream(it).text
             table = table.replace("\n", " ")
             table = table.replace("\r", " ")

@@ -1,0 +1,4 @@
+insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines1', '2016-01-02', 'source1', 'http://link1', 'description1', '2016-01-02 00:00:00');
+insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines2', '2016-01-03', 'source2', 'http://link2', 'description2', '2016-01-03 00:00:00');
+insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines3', '2016-01-04', 'source3', 'http://link3', 'description3', '2016-01-04 00:00:00');
+insert into article_summary(headlines, news_date, source, article_link, description, created_ts) values('headlines4', '2016-01-05', 'source4', 'http://link4', 'description4', '2016-01-05 00:00:00');
