@@ -1,1 +1,1 @@
-Newsparser
+Newsparser [![Build Status](https://secure.travis-ci.org/idlisingh/newsparser.png)](http://travis-ci.org/idlisingh/newsparser)
