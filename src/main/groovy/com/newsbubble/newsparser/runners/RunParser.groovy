@@ -15,7 +15,8 @@ def sourceMap = [
     "abc": "http://feeds.abcnews.com/abcnews/politicsheadlines",
     "nbc": "http://www.nbcnewyork.com/news/politics/?rss=y",
     "bbc": "http://feeds.bbci.co.uk/news/politics/rss.xml?edition=us",
-    "nytimes": "http://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"
+    "nytimes": "http://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+    "guardian": "http://www.theguardian.com/us-news/rss"
 ]
 
 while(true) {
