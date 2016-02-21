@@ -1,11 +1,12 @@
 package com.newsbubble.newsparser.runners
 
+import com.newsbubble.newsparser.DAO
 import com.newsbubble.newsparser.Parser
 import org.apache.log4j.Logger
 
 def Logger LOG = Logger.getLogger(RunParser.class)
 
-def parser = new Parser()
+def parser = new Parser(new DAO())
 
 def sourceMap = [
     "huffingtonpost": "http://feeds.huffingtonpost.com/c/35496/f/677086/index.rss",
