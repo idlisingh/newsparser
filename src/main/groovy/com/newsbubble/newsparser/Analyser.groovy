@@ -14,14 +14,12 @@ class Analyser {
 
     def static Logger LOG = Logger.getLogger(Analyser.class)
 
-    def Analyser() {
-        dao = new DAO()
-    }
+    def Analyser() { }
 
     def void analyse() {
         LOG.info("Analysing...")
 
-        Timestamp lastRun = "get last run"()
+        Timestamp lastRun = getLastRun()
 
         def List<ArticleSummary> articles = dao.getArticleSummary(lastRun)
         def List details = processArticles(articles)
@@ -87,13 +85,17 @@ class Analyser {
         def updateValues = newCandidateSummary.findAll { dbCandidateSummary.contains(it) }
         def insertValues = newCandidateSummary.findAll { !dbCandidateSummary.contains(it) }
 
+        def map = dbCandidateSummary.groupBy { it.getKey() }
+        updateValues.each {
+            it.count += map[it.getKey()].count
+        }
         LOG.info("Insert: ${insertValues.size()} Update: ${updateValues.size()}")
 
         dao.insertCandidateSummary(insertValues)
         dao.updateCandidateSummaryCount(updateValues)
     }
 
-    def Timestamp "get last run"() {
+    def Timestamp getLastRun() {
         def Timestamp lastRun = dao.getLastRun()
 
         LOG.info("Last run: $lastRun")

@@ -15,10 +15,6 @@ class Parser {
 
     def Parser() { }
 
-    Parser(DAO dao) {
-        this.dao = dao
-    }
-
     def void parser(String source, String rssLink) {
 
         LOG.info("Processing site: $source")

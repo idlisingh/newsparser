@@ -6,7 +6,9 @@ import org.apache.log4j.Logger
 
 def Logger LOG = Logger.getLogger(RunParser.class)
 
-def parser = new Parser(new DAO())
+def parser = new Parser()
+
+parser.dao = new DAO()
 
 def sourceMap = [
     "huffingtonpost": "http://feeds.huffingtonpost.com/c/35496/f/677086/index.rss",
