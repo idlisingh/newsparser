@@ -77,7 +77,7 @@ class DAO {
         }
     }
 
-    def updateCandidateSummary(List<CandidateSummary> updateValues) {
+    def updateCandidateSummaryCount(List<CandidateSummary> updateValues) {
         updateValues.each { CandidateSummary key ->
             sql.execute("update candidate_summary set count = (count + ? ), updated_ts = current_timestamp where news_date = ? and candidate = ? and source = ?",
                     [key.count, key.newsDate, key.candidate, key.source]
@@ -85,18 +85,16 @@ class DAO {
         }
     }
 
-    def insert(List<CandidateDetails> candidateDetails) {
+    def insertCandidateDetails(List<CandidateDetails> candidateDetails) {
         candidateDetails.each { detail ->
             sql.execute("insert into candidate_details(candidate, article_id) values(?, ?)", [detail.candidate, detail.articleId])
         }
     }
 
     def insertArticleSummary(List<ArticleSummary> articles) {
-        if (!articles.isEmpty()) {
-            articles.each { ArticleSummary it ->
-                sql.execute("insert into article_summary(headlines, news_date, source, article_link, description) values(?, ?, ?, ?, ?)",
-                        [it.headlines, it.newsDate, it.source, it.link, it.description])
-            }
+        articles.each { ArticleSummary it ->
+            sql.execute("insert into article_summary(headlines, news_date, source, article_link, description) values(?, ?, ?, ?, ?)",
+                    [it.headlines, it.newsDate, it.source, it.link, it.description])
         }
     }
 
@@ -108,5 +106,25 @@ class DAO {
         }
 
         dbHeadLines
+    }
+
+    def Timestamp getLastRun() {
+        def Timestamp lastRun
+        sql.eachRow("select run_time from last_run") {
+            lastRun = it.run_time
+        }
+        lastRun
+    }
+
+    def void insertLastRun(Timestamp currentTime) {
+        sql.execute("insert into last_run(run_time) values (?)", currentTime)
+    }
+
+    def void updateLastRun(Timestamp currentTime) {
+        sql.execute("update last_run set run_time = ?", [currentTime])
+    }
+
+    def void truncateCandidateSummary() {
+        sql.execute("truncate table candidate_summary")
     }
 }

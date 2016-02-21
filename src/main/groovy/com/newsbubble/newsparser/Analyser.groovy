@@ -4,24 +4,17 @@ import com.newsbubble.newsparser.domain.ArticleSummary
 import com.newsbubble.newsparser.domain.CandidateDetails
 import com.newsbubble.newsparser.domain.CandidateSourceKey
 import com.newsbubble.newsparser.domain.CandidateSummary
-import groovy.sql.Sql
 import org.apache.log4j.Logger
 
 import java.sql.Timestamp
 
 class Analyser {
 
-    def Sql sql
     def DAO dao
 
     def static Logger LOG = Logger.getLogger(Analyser.class)
 
     def Analyser() {
-        def url = System.getProperty("db.url")
-        def userId = System.getProperty("db.user")
-        def password = System.getProperty("db.password")
-        sql = Sql.newInstance(url, userId, password, "org.postgresql.Driver")
-
         dao = new DAO()
     }
 
@@ -36,7 +29,7 @@ class Analyser {
         List<CandidateDetails> candidateDetails = details[1]
         List<CandidateDetails> dbCandidateDetails = dao.getExistingCandidateDetails()
         candidateDetails.removeAll(dbCandidateDetails)
-        dao.insert(candidateDetails)
+        dao.insertCandidateDetails(candidateDetails)
 
         List<CandidateSummary> newCandidateSummary = details[0]
         List<CandidateSummary> dbCandidateSummary = dao.getExistingCandidateSummary()
@@ -97,26 +90,23 @@ class Analyser {
         LOG.info("Insert: ${insertValues.size()} Update: ${updateValues.size()}")
 
         dao.insertCandidateSummary(insertValues)
-        dao.updateCandidateSummary(updateValues)
+        dao.updateCandidateSummaryCount(updateValues)
     }
 
     def Timestamp "get last run"() {
-        def Timestamp lastRun
-        sql.eachRow("select run_time from last_run") {
-            lastRun = it.run_time
-        }
+        def Timestamp lastRun = dao.getLastRun()
 
         LOG.info("Last run: $lastRun")
         def currentTime = new Timestamp(System.currentTimeMillis())
 
         if (lastRun == null) {
             lastRun = new Timestamp(0)
-            sql.execute("insert into last_run(run_time) values (?)", currentTime)
-            sql.execute("truncate table candidate_summary")
+            dao.insertLastRun(currentTime)
+            dao.truncateCandidateSummary()
             LOG.info("First time processing, Truncated candidate_summary table")
         } else {
             LOG.info("Updating run_time")
-            sql.execute("update last_run set run_time = ?", [currentTime])
+            dao.updateLastRun(currentTime)
         }
 
         LOG.info("Processing since: $lastRun")

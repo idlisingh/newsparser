@@ -20,8 +20,10 @@ insert into candidate_summary(news_date, candidate, source, count, created_ts, u
 insert into candidate_summary(news_date, candidate, source, count, created_ts, updated_ts) values ('2016-01-03', 'clinton', 'bbc', 65, '2016-01-03 00:00:00', '2016-01-03 12:00:00');
 insert into candidate_summary(news_date, candidate, source, count, created_ts, updated_ts) values ('2016-01-03', 'clinton', 'fox', 75, '2016-01-03 00:00:00', '2016-01-03 12:00:00');
 
-insert into candidate_details(id, candidate, article_id, created_ts) values (1, 'sanders', 1, '2016-01-01 00:00:00');
-insert into candidate_details(id, candidate, article_id, created_ts) values (2, 'sanders', 2, '2016-01-02 00:00:00');
-insert into candidate_details(id, candidate, article_id, created_ts) values (3, 'sanders', 3, '2016-01-03 00:00:00');
-insert into candidate_details(id, candidate, article_id, created_ts) values (4, 'sanders', 4, '2016-01-04 00:00:00');
-insert into candidate_details(id, candidate, article_id, created_ts) values (5, 'sanders', 5, '2016-01-05 00:00:00');
+insert into candidate_details(id, candidate, article_id, created_ts) values (1, 'sanders', 10, '2016-01-01 00:00:00');
+insert into candidate_details(id, candidate, article_id, created_ts) values (2, 'sanders', 20, '2016-01-02 00:00:00');
+insert into candidate_details(id, candidate, article_id, created_ts) values (3, 'sanders', 30, '2016-01-03 00:00:00');
+insert into candidate_details(id, candidate, article_id, created_ts) values (4, 'sanders', 40, '2016-01-04 00:00:00');
+insert into candidate_details(id, candidate, article_id, created_ts) values (5, 'sanders', 50, '2016-01-05 00:00:00');
+
+insert into last_run values('2016-01-01 00:00:00');

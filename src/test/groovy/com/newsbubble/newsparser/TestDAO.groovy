@@ -1,5 +1,7 @@
 package com.newsbubble.newsparser
 
+import com.newsbubble.newsparser.domain.ArticleSummary
+import com.newsbubble.newsparser.domain.CandidateDetails
 import com.newsbubble.newsparser.domain.CandidateSummary
 import org.junit.Before
 import org.junit.Test
@@ -85,6 +87,104 @@ class TestDAO extends AbstractDBSetup {
             assert it.createdTs > currentTime
             assert it.updatedTs > currentTime
             assert it.createdTs == it.updatedTs
+        }
+    }
+
+    @Test def void "test updateCandidateSummaryCount"() {
+        truncateAllTables()
+        def values = [
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-01"), candidate: 'candidate1', source: 'source1', count: 1),
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-02"), candidate: 'candidate2', source: 'source2', count: 2),
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-03"), candidate: 'candidate3', source: 'source3', count: 3)
+        ]
+        dao.insertCandidateSummary(values)
+
+        values.each {
+            it.count = it.count * 10
+        }
+
+        dao.updateCandidateSummaryCount(values)
+
+        def results = dao.getExistingCandidateSummary()
+
+        results.collect{ it.count }.sort() == [10, 20, 30]
+    }
+
+    @Test def void "test getLastRun"() {
+        assert dao.getLastRun() == Timestamp.valueOf("2016-01-01 00:00:00")
+    }
+
+    @Test def void "test insertLastRun"() {
+        truncateAllTables()
+        def timestamp = new Timestamp(13)
+        dao.insertLastRun(timestamp)
+        assert dao.getLastRun() == timestamp
+    }
+
+    @Test def void "test updateLastRun"() {
+        def timestamp = new Timestamp(13)
+        dao.updateLastRun(timestamp)
+        assert dao.getLastRun() == timestamp
+    }
+
+    @Test def void "test truncateCandidateSummary"() {
+        dao.truncateCandidateSummary()
+        assert dao.getExistingCandidateSummary().size() == 0
+    }
+
+    @Test def void "test getExistingCandidateDetails"() {
+        def results = dao.getExistingCandidateDetails()
+
+        assert results.size() == 5
+        results.each {
+            assert it.id in [1, 2, 3, 4, 5]
+            assert it.id * 10 == it.articleId
+            assert it.createdTs == Timestamp.valueOf("2016-01-0${it.id} 00:00:00")
+            assert it.candidate == "sanders"
+        }
+    }
+
+    @Test def void "test insertCandidateDetails"() {
+        truncateAllTables()
+
+        def values = [
+                new CandidateDetails(candidate: "candidate 1", articleId: 200),
+                new CandidateDetails(candidate: "candidate 2", articleId: 400),
+                new CandidateDetails(candidate: "candidate 3", articleId: 600),
+        ]
+
+        dao.insertCandidateDetails(values)
+
+        def results = dao.getExistingCandidateDetails()
+
+        assert results.size() == 3
+
+        results.each {
+            assert it.candidate in ["candidate 1", "candidate 2", "candidate 3"]
+            assert it.articleId in [200, 400, 600]
+        }
+    }
+
+    @Test def void "test insertArticleSummary"() {
+        truncateAllTables()
+
+        def currentTime = new Timestamp(System.currentTimeMillis() - 1000)
+        def values = (1..5).collect {
+            new ArticleSummary(headlines: "headlines ${it}", source: "source ${it}", link: "link ${it}", newsDate: java.sql.Date.valueOf("2016-01-0${it}"))
+        }
+
+        dao.insertArticleSummary(values)
+
+        def results = dao.getArticleSummary(currentTime)
+
+        assert results.size() == 5
+
+        results.sort{ it.createdTs }.eachWithIndex { ArticleSummary entry, int i ->
+            i++
+            assert entry.headlines == "headlines ${i}"
+            assert entry.source == "source ${i}"
+            assert entry.link == "link ${i}"
+            assert entry.newsDate == java.sql.Date.valueOf("2016-01-0${i}")
         }
     }
 }

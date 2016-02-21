@@ -28,7 +28,7 @@ abstract class AbstractDBSetup {
     }
 
     def void createTables() {
-        ["tables/article_summary.table", "tables/candidate_summary.table", "tables/candidate_details.table", "sql/inserts.sql"].each {
+        ["tables/article_summary.table", "tables/candidate_summary.table", "tables/candidate_details.table", "tables/last_run.table", "sql/inserts.sql"].each {
             def table = this.getClass().getClassLoader().getResourceAsStream(it).text
             table = table.replace("\n", " ")
             table = table.replace("\r", " ")
@@ -37,7 +37,7 @@ abstract class AbstractDBSetup {
     }
 
     def void truncateAllTables() {
-        ["article_summary", "candidate_summary", "candidate_details"].each {
+        ["article_summary", "candidate_summary", "candidate_details", "last_run"].each {
             sql.execute("truncate table " + it)
         }
     }
