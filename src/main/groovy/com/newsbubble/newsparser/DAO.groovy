@@ -21,7 +21,7 @@ class DAO {
         sql = Sql.newInstance(url, userId, password, driver)
     }
 
-    def ArrayList<CandidateSummary> getExistingCandidateSummary() {
+    def List<CandidateSummary> getExistingCandidateSummary() {
         def List<CandidateSummary> candidateSummaries = []
         sql.eachRow("select news_date, candidate, source, count, created_ts, updated_ts from candidate_summary") {
             candidateSummaries += new CandidateSummary(

@@ -1,10 +1,12 @@
 package com.newsbubble.newsparser
 
-import com.sun.tools.corba.se.idl.constExpr.Times
+import com.newsbubble.newsparser.domain.CandidateSummary
 import org.junit.Before
 import org.junit.Test
 
 import java.sql.Timestamp
+
+import static org.junit.Assert.fail
 
 
 class TestDAO extends AbstractDBSetup {
@@ -21,6 +23,7 @@ class TestDAO extends AbstractDBSetup {
 
         def values = dao.getArticleSummary(Timestamp.valueOf("2016-01-04 00:00:00"))
         assert 1 == values.size()
+        assert 4 == values[0].id
         assert "headlines4" == values[0].headlines
         assert java.sql.Date.valueOf("2016-01-05") == values[0].newsDate
         assert "source4" == values[0].source
@@ -35,5 +38,53 @@ class TestDAO extends AbstractDBSetup {
         assert headlines.size() == 4
 
         assert headlines.sort() == [ "headlines1", "headlines2", "headlines3", "headlines4" ]
+    }
+
+    @Test def void "test getExistingCandidateSummary"() {
+        def candidateSummaries = dao.getExistingCandidateSummary()
+
+        assert 15 == candidateSummaries.size()
+        def single = candidateSummaries.findAll { it.candidate == 'sanders' && it.source == 'nbc' && it.newsDate == java.sql.Date.valueOf("2016-01-02") }
+
+        assert single.size() == 1
+
+        assert single[0].count == 10
+        assert single[0].createdTs == Timestamp.valueOf("2016-01-02 00:00:00")
+        assert single[0].updatedTs == Timestamp.valueOf("2016-01-02 12:00:00")
+    }
+
+    @Test def void "test insertCandidateSummary"() {
+        def currentTime = new Timestamp(System.currentTimeMillis() - 1000)
+        truncateAllTables()
+        def values = [
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-01"), candidate: 'candidate1', source: 'source1', count: 1),
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-02"), candidate: 'candidate2', source: 'source2', count: 2),
+                new CandidateSummary(newsDate: java.sql.Date.valueOf("2016-02-03"), candidate: 'candidate3', source: 'source3', count: 3)
+        ]
+        dao.insertCandidateSummary(values)
+
+        def results = dao.getExistingCandidateSummary()
+        assert results.size() == 3
+
+        results.each {
+            if (it.newsDate == java.sql.Date.valueOf("2016-02-01")) {
+                assert it.candidate == "candidate1"
+                assert it.source == "source1"
+                assert it.count == 1
+            } else if (it.newsDate == java.sql.Date.valueOf("2016-02-02")) {
+                assert it.candidate == "candidate2"
+                assert it.source == "source2"
+                assert it.count == 2
+            } else if (it.newsDate == java.sql.Date.valueOf("2016-02-03")) {
+                assert it.candidate == "candidate3"
+                assert it.source == "source3"
+                assert it.count == 3
+            } else {
+                fail("Unexpected value $it")
+            }
+            assert it.createdTs > currentTime
+            assert it.updatedTs > currentTime
+            assert it.createdTs == it.updatedTs
+        }
     }
 }
