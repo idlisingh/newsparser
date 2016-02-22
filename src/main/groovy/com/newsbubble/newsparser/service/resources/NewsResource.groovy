@@ -18,6 +18,11 @@ class NewsResource {
         summary.each {
             result[it.candidate] = result[it.candidate] + it.count
         }
-        result.toMapString()
+        def resultStr = ""
+        result.each {
+            resultStr += """{text: "${it.key}", weight: ${it.value}}, """
+        }
+        def html = this.getClass().getClassLoader().getResourceAsStream("index.html").text
+        html.replace("REPLACEME", resultStr)
     }
 }
