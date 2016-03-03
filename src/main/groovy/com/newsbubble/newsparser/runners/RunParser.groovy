@@ -22,12 +22,9 @@ def sourceMap = [
     "guardian": "http://www.theguardian.com/us-news/rss"
 ]
 
-while(true) {
-    LOG.info("Begin processing all sources.")
-    sourceMap.each { source, rss ->
-        parser.parser(source, rss)
-    }
-    LOG.info("Done processing all sources. Sleeping")
-    Thread.sleep(60000)
-    LOG.info("**************************************")
+LOG.info("Begin processing all sources.")
+sourceMap.each { source, rss ->
+    parser.parser(source, rss)
 }
+LOG.info("Done processing all sources. Sleeping")
+LOG.info("**************************************")
