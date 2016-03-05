@@ -3,7 +3,7 @@
 . ~/.bash_profile
 
 NOW=`date +"%Y-%m-%d-%H-%M"`
-LOG_FILE=~/logs/parser/run_parser_$NOW.log
+LOG_FILE=~/logs/parser/$NOW.log
 
 CLASS=com.newsbubble.newsparser.runners.RunParser
 
