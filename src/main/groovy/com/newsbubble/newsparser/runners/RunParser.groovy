@@ -26,5 +26,5 @@ LOG.info("Begin processing all sources.")
 sourceMap.each { source, rss ->
     parser.parser(source, rss)
 }
-LOG.info("Done processing all sources. Sleeping")
+LOG.info("Done processing all sources.")
 LOG.info("**************************************")
