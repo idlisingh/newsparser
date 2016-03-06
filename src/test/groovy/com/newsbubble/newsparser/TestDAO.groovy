@@ -128,9 +128,17 @@ class TestDAO extends AbstractDBSetup {
     }
 
     @Test def void "test truncateCandidateSummary"() {
+        assert dao.getExistingCandidateSummary().size() > 0
         dao.truncateCandidateSummary()
         assert dao.getExistingCandidateSummary().size() == 0
     }
+
+    @Test def void "test truncateCandidateDetails"() {
+        assert dao.getExistingCandidateDetails().size() > 0
+        dao.truncateCandidateDetails()
+        assert dao.getExistingCandidateDetails().size() == 0
+    }
+
 
     @Test def void "test getExistingCandidateDetails"() {
         def results = dao.getExistingCandidateDetails()

@@ -127,4 +127,7 @@ class DAO {
     def void truncateCandidateSummary() {
         sql.execute("truncate table candidate_summary")
     }
+    def void truncateCandidateDetails() {
+        sql.execute("truncate table candidate_details")
+    }
 }

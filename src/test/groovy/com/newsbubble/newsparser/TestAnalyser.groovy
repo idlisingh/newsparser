@@ -15,6 +15,7 @@ import static org.junit.Assert.fail
 import static org.mockito.Matchers.any
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.verifyNoMoreInteractions
 import static org.mockito.Mockito.when
 import static org.mockito.MockitoAnnotations.initMocks
 
@@ -41,9 +42,12 @@ class TestAnalyser {
 
         assert result == new Timestamp(0)
 
+        verify(dao).getLastRun()
         verify(dao).insertLastRun(any(Timestamp.class))
         verify(dao, never()).updateLastRun(any(Timestamp.class))
         verify(dao).truncateCandidateSummary()
+        verify(dao).truncateCandidateDetails()
+        verifyNoMoreInteractions(dao)
     }
 
     @Test def void "test getLastRun not first time run"() {
@@ -55,7 +59,9 @@ class TestAnalyser {
 
         assert result == ts
 
+        verify(dao).getLastRun()
         verify(dao).updateLastRun(any(Timestamp.class))
+        verifyNoMoreInteractions(dao)
     }
 
     @Test def void "test nothing to process since last run"() {

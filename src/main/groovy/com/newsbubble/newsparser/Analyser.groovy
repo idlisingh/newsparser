@@ -105,6 +105,7 @@ class Analyser {
             lastRun = new Timestamp(0)
             dao.insertLastRun(currentTime)
             dao.truncateCandidateSummary()
+            dao.truncateCandidateDetails()
             LOG.info("First time processing, Truncated candidate_summary table")
         } else {
             LOG.info("Updating run_time")
