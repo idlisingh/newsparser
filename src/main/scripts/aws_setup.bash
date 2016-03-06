@@ -23,6 +23,7 @@ mvn clean install
 mkdir -p ~/logs/analyser
 mkdir -p ~/logs/parser
 mkdir -p ~/logs/service
+mkdir -p ~/prod
 
 # Cron entries
 */5 * * * * /home/ec2-user/run_parser.bash
