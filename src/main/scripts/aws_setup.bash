@@ -15,18 +15,13 @@ sudo rpm -e java-1.8.0-openjdk-headless-1.8.0.71-2.b15.el7_2.x86_64
 
 sudo yum intall git
 
-git clone https://github.com/idlisingh/newsparser
-
-cd newsparser
-mvn clean install
-
 mkdir -p ~/logs/analyser
 mkdir -p ~/logs/parser
 mkdir -p ~/logs/service
 mkdir -p ~/prod
 
 # Cron entries
-*/5 * * * * /home/ec2-user/run_parser.bash
+*/5 * * * * /home/ec2-user/run_parser.bash; /home/ec2-user/run_analyser.bash
 */1 * * * * /home/ec2-user/run_service.bash >> ~/logs/service/service_cron.log
 
 # Loading tables for the first time
