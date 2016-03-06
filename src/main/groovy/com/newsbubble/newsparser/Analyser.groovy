@@ -87,7 +87,10 @@ class Analyser {
 
         def map = dbCandidateSummary.groupBy { it.getKey() }
         updateValues.each {
-            it.count += map[it.getKey()].count
+            def increaseBy = map[it.getKey()].count
+            def priorValue = it.count
+            it.count += increaseBy
+            LOG.info("For Candidate ${it.candidate} value changed from $priorValue to ${it.count} due to $increaseBy")
         }
         LOG.info("Insert: ${insertValues.size()} Update: ${updateValues.size()}")
 
