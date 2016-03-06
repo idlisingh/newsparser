@@ -5,6 +5,9 @@ import com.newsbubble.newsparser.DAO
 
 def analyser = new Analyser()
 
-analyser.dao = new DAO()
+def dao = new DAO()
+dao.sql.execute("truncate table last_run")
+
+analyser.dao = dao
 
 analyser.analyse()
