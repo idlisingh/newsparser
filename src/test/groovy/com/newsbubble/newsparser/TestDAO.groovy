@@ -195,4 +195,8 @@ class TestDAO extends AbstractDBSetup {
             assert entry.newsDate == java.sql.Date.valueOf("2016-01-0${i}")
         }
     }
+
+    @Test def void "test getArticleSummaryTotalCount"() {
+        assert dao.getArticleSummaryTotalCount() == 4
+    }
 }

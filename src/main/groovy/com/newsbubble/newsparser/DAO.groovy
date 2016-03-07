@@ -127,7 +127,14 @@ class DAO {
     def void truncateCandidateSummary() {
         sql.execute("truncate table candidate_summary")
     }
+
     def void truncateCandidateDetails() {
         sql.execute("truncate table candidate_details")
+    }
+
+    def Long getArticleSummaryTotalCount() {
+        def totalCount = 0
+        sql.eachRow("select count(*) as count from article_summary") { totalCount = it.count }
+        totalCount
     }
 }

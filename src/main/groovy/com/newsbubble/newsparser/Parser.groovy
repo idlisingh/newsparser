@@ -31,7 +31,9 @@ class Parser {
 
         dao.insertArticleSummary(articles)
 
-        LOG.info("Done processing for $source. Inserted ${articles.size()} values")
+        def totalCount = dao.getArticleSummaryTotalCount()
+
+        LOG.info("Done processing for $source. Inserted ${articles.size()} values. Total Articles: ${totalCount}")
     }
 
     def List<ArticleSummary> getRss(String rssLink, String source) {

@@ -38,11 +38,13 @@ class TestParser {
         ]
 
         when(dao.getDistinctArticleHeadlines()).thenReturn([])
+        when(dao.getArticleSummaryTotalCount()).thenReturn(2L)
         doReturn(summary).when(parser).getRss("", "")
 
         parser.parser("", "")
 
         verify(dao).insertArticleSummary(summary)
+        verify(dao).getArticleSummaryTotalCount()
     }
 
     @Test def void "test articles from rss and some entries in db"() {
@@ -52,11 +54,13 @@ class TestParser {
         ]
 
         when(dao.getDistinctArticleHeadlines()).thenReturn(["headlines2"])
+        when(dao.getArticleSummaryTotalCount()).thenReturn(2L)
         doReturn(summary).when(parser).getRss("", "")
 
         parser.parser("", "")
 
         verify(dao).insertArticleSummary([summary[0]])
+        verify(dao).getArticleSummaryTotalCount()
     }
 
     @Test def void "test articles from rss and all entries in db"() {
@@ -66,11 +70,13 @@ class TestParser {
         ]
 
         when(dao.getDistinctArticleHeadlines()).thenReturn(["headlines1", "headlines2"])
+        when(dao.getArticleSummaryTotalCount()).thenReturn(2L)
         doReturn(summary).when(parser).getRss("", "")
 
         parser.parser("", "")
 
         verify(dao).insertArticleSummary([])
+        verify(dao).getArticleSummaryTotalCount()
     }
 
     @Test def void "test parser called multiple times"() {
